@@ -43,7 +43,8 @@ function columnLetter(col: number): string {
   return s;
 }
 
-function normalise(raw: ExcelJS.CellValue): { kind: CellKind; value: ParsedCell["value"]; formula?: string } {
+function normalise(cell: ExcelJS.Cell): { kind: CellKind; value: ParsedCell["value"]; formula?: string } {
+  const raw = cell.value;
   if (raw === null || raw === undefined || raw === "") return { kind: "empty", value: null };
 
   if (typeof raw === "number") return { kind: "number", value: raw };
@@ -55,9 +56,13 @@ function normalise(raw: ExcelJS.CellValue): { kind: CellKind; value: ParsedCell[
     // Formula cells carry the expression plus the value Excel last calculated.
     // The cached result is what matters here; the sheet is already computed.
     if ("formula" in raw || "sharedFormula" in raw) {
-      const f = raw as ExcelJS.CellFormulaValue;
-      const result = f.result as unknown;
-      const formula = ("formula" in f && f.formula) || "";
+      const f = raw as ExcelJS.CellFormulaValue & { sharedFormula?: string };
+      // Read the result from the cell rather than from cell.value: the latter
+      // is built with `value ? value.result : undefined`, which throws away a
+      // cached 0. Whole rows here legitimately compute to zero, and treating
+      // those as uncalculated would blank them out and raise a false alarm.
+      const result = cell.result as unknown;
+      const formula = f.formula || f.sharedFormula || "";
       if (result === null || result === undefined) return { kind: "formula", value: null, formula };
       if (typeof result === "object" && result !== null && "error" in (result as object)) {
         return { kind: "error", value: String((result as { error: string }).error), formula };
@@ -111,7 +116,7 @@ export async function parseFeasibility(buffer: ArrayBuffer): Promise<ParseResult
       // the master stops a heading from being repeated across its whole span.
       if (cell.isMerged && cell.master && cell.master.address !== cell.address) return;
 
-      const { kind, value, formula } = normalise(cell.value);
+      const { kind, value, formula } = normalise(cell);
       if (kind === "empty") return;
       if (formula && value === null) staleFormulas += 1;
       if (colNumber > maxCol) maxCol = colNumber;
