@@ -10,11 +10,22 @@ type Props = {
   onError: (message: string) => void;
 };
 
+// Blob paths are URLs. Drawing exports routinely carry spaces and brackets
+// (e.g. "FLOOR FINISH[1].pdf"), so the stored path is reduced to safe
+// characters; the original name is kept separately for display.
+function safePath(name: string) {
+  const dot = name.lastIndexOf(".");
+  const base = dot > 0 ? name.slice(0, dot) : name;
+  const ext = dot > 0 ? name.slice(dot + 1).toLowerCase().replace(/[^a-z0-9]/g, "") : "";
+  const clean = base.normalize("NFKD").replace(/[^a-zA-Z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 80);
+  return ext ? `${clean || "gambar"}.${ext}` : clean || "gambar";
+}
+
 export default function DrawingUploader({ projectId, onAdded, onError }: Props) {
   const [discipline, setDiscipline] = useState<Discipline>("STR");
   const [level, setLevel] = useState("Lantai 1");
   const [busy, setBusy] = useState(false);
-  const [progress, setProgress] = useState(0);
+  const [progress, setProgress] = useState<number | null>(0);
   const fileRef = useRef<HTMLInputElement>(null);
 
   async function handleFile(file: File) {
@@ -28,11 +39,23 @@ export default function DrawingUploader({ projectId, onAdded, onError }: Props) 
     try {
       // The file goes straight from the browser to Blob, so large drawings
       // never pass through a serverless function (PRD section 8).
-      const blob = await upload(`gambar/${projectId}/${Date.now()}-${file.name}`, file, {
-        access: "public",
-        handleUploadUrl: "/api/upload",
-        onUploadProgress: ({ percentage }) => setProgress(Math.round(percentage)),
-      });
+      const path = `gambar/${projectId}/${Date.now()}-${safePath(file.name)}`;
+      const options = { access: "public" as const, handleUploadUrl: "/api/upload" };
+
+      let blob;
+      try {
+        blob = await upload(path, file, {
+          ...options,
+          onUploadProgress: ({ percentage }) => setProgress(Math.round(percentage)),
+        });
+      } catch {
+        // Asking for progress makes the SDK send the file as a streamed request
+        // body, which Chrome only permits over HTTP/2 or QUIC. Behind a proxy
+        // that falls back to HTTP/1.1 it dies with ERR_H2_OR_QUIC_REQUIRED.
+        // Retry without progress, which uses an ordinary request.
+        setProgress(null);
+        blob = await upload(path, file, options);
+      }
 
       const res = await fetch("/api/drawings", {
         method: "POST",
@@ -122,11 +145,19 @@ export default function DrawingUploader({ projectId, onAdded, onError }: Props) 
 
       {busy && (
         <div style={{ marginTop: 10 }}>
-          <div style={{ height: 6, background: "var(--color-neutral-100)", border: "1px solid var(--color-divider)" }}>
-            <div style={{ height: "100%", width: `${progress}%`, background: "var(--color-accent)", transition: "width .2s" }} />
+          <div style={{ height: 6, background: "var(--color-neutral-100)", border: "1px solid var(--color-divider)", overflow: "hidden" }}>
+            <div
+              className={progress === null ? "indeterminate" : undefined}
+              style={{
+                height: "100%",
+                width: progress === null ? "40%" : `${progress}%`,
+                background: "var(--color-accent)",
+                transition: progress === null ? undefined : "width .2s",
+              }}
+            />
           </div>
           <div style={{ font: "11px var(--font-body)", color: "var(--color-neutral-700)", marginTop: 4 }}>
-            Mengunggah… {progress}%
+            {progress === null ? "Mengunggah… (tanpa indikator di jaringan ini)" : `Mengunggah… ${progress}%`}
           </div>
         </div>
       )}
