@@ -37,8 +37,11 @@ const MENU_ICONS: Record<MenuKey, ComponentType<{ size?: number }>> = {
 
 const ACTIVITY_ICONS = { doc: DocIcon, camera: CameraIcon, layers: LayersIcon };
 
-// Only Komposit Gambar is built so far; the rest still show a placeholder.
-const MENU_ROUTES: Partial<Record<MenuKey, string>> = { overlay: "/komposit" };
+// Menus without a route here are not built yet and say so when tapped.
+const MENU_ROUTES: Partial<Record<MenuKey, string>> = {
+  feasibility: "/kelayakan",
+  overlay: "/komposit",
+};
 
 function todayLabel() {
   return new Intl.DateTimeFormat("id-ID", {
