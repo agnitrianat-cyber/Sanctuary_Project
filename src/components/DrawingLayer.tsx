@@ -16,11 +16,13 @@ export default function DrawingLayer({ drawing, opacity }: { drawing: Drawing; o
 
     (async () => {
       try {
-        const pdfjs = await import("pdfjs-dist");
-        // The worker ships with the package; resolving it through the bundler
-        // keeps it self-hosted instead of relying on a CDN.
+        // The legacy build is required, not just a fallback: the default build
+        // calls Map.prototype.getOrInsertComputed, which most browsers in use
+        // today do not have yet, and every render throws. Legacy ships the
+        // polyfills. The worker is self-hosted from the package, not a CDN.
+        const pdfjs = await import("pdfjs-dist/legacy/build/pdf.mjs");
         pdfjs.GlobalWorkerOptions.workerSrc = new URL(
-          "pdfjs-dist/build/pdf.worker.min.mjs",
+          "pdfjs-dist/legacy/build/pdf.worker.min.mjs",
           import.meta.url,
         ).toString();
 
@@ -56,6 +58,10 @@ export default function DrawingLayer({ drawing, opacity }: { drawing: Drawing; o
     objectFit: "contain" as const,
     opacity,
     pointerEvents: "none" as const,
+    // Drawings carry an opaque white page behind the linework, which would
+    // hide every layer underneath. Multiply keeps the dark lines and lets the
+    // white fall away, so the disciplines actually stack.
+    mixBlendMode: "multiply" as const,
   };
 
   if (failed) {
