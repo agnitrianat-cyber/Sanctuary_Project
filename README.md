@@ -37,6 +37,13 @@ Semua dijalankan lewat browser — tidak perlu akses lokal.
    tabel masih kosong, jadi data asli tidak akan tertimpa.
 3. Buka halaman utama.
 
-Variabel yang dipakai: `DATABASE_URL` (atau `POSTGRES_URL` /
-`POSTGRES_URL_NON_POOLING`), `BLOB_READ_WRITE_TOKEN`, dan `GOOGLE_AI` (atau
-`GEMINI_API_KEY`). Lihat `.env.example`.
+Variabel yang dipakai — untuk tiap kelompok, yang pertama ditemukan akan
+dipakai, jadi penamaan yang berbeda tetap jalan:
+
+- Database: `DATABASE_URL`, `POSTGRES_URL`, `POSTGRES_URL_NON_POOLING`
+- Blob: `BLOB_READ_WRITE_TOKEN`, `BLOB2_READ_WRITE_TOKEN` (Vercel menambah
+  awalan `BLOB2_`, `BLOB3_`, ... kalau store dibuat ulang atau ditambah)
+- Gemini: `GOOGLE_AI`, `GEMINI_API_KEY`
+
+`/api/health` menampilkan variabel mana yang benar-benar terpakai lewat kolom
+`usingVar`. Lihat `.env.example`.
