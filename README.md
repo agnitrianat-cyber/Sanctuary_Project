@@ -23,3 +23,20 @@ The design medium is **HTML/CSS/JS** — these are prototypes, not production co
 - `README.md` — this file
 - `chats/` — conversation transcripts (read these!)
 - `project/` — the `Mobile dashboard design` project files (HTML prototypes, assets, components)
+
+---
+
+## Setup setelah deploy ke Vercel
+
+Semua dijalankan lewat browser — tidak perlu akses lokal.
+
+1. **`/api/health`** — cek koneksi. Menampilkan variabel mana yang terdeteksi
+   (hanya ada/tidak, nilainya tidak pernah ditampilkan) dan error per komponen.
+2. **`/api/setup`** — buat tabel + isi data contoh. Aman dibuka berulang kali:
+   tabel dibuat dengan `IF NOT EXISTS` dan pengisian data hanya terjadi selama
+   tabel masih kosong, jadi data asli tidak akan tertimpa.
+3. Buka halaman utama.
+
+Variabel yang dipakai: `DATABASE_URL` (atau `POSTGRES_URL` /
+`POSTGRES_URL_NON_POOLING`), `BLOB_READ_WRITE_TOKEN`, dan `GOOGLE_AI` (atau
+`GEMINI_API_KEY`). Lihat `.env.example`.

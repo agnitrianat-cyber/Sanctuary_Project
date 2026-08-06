@@ -16,7 +16,7 @@ export default async function Page() {
       <NoticeScreen
         title="Belum ada data proyek"
         message="Database sudah terhubung, tapi tabel proyek masih kosong."
-        hint="Jalankan `npm run db:setup` untuk membuat tabel dan mengisi data contoh."
+        hint="Buka /api/setup sekali untuk membuat tabel dan mengisi data contoh, lalu muat ulang halaman ini."
       />
     );
   }

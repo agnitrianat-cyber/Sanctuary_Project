@@ -1,6 +1,6 @@
 import { list } from "@vercel/blob";
-import { getAiClient } from "@/lib/ai";
-import { getDb } from "@/lib/db";
+import { AI_KEY_VARS, getAiClient, getAiKey } from "@/lib/ai";
+import { DB_URL_VARS, getDb, getDbUrl } from "@/lib/db";
 
 // This route is publicly reachable, so error text must stay useful for
 // debugging without echoing credentials back to the caller.
@@ -21,6 +21,15 @@ async function run(fn: () => Promise<unknown>): Promise<Check> {
   }
 }
 
+// Reports which of the expected variables exist, never their values, so the
+// deployment can be diagnosed without exposing secrets.
+function envPresence() {
+  const names = [...DB_URL_VARS, "BLOB_READ_WRITE_TOKEN", ...AI_KEY_VARS];
+  const present: Record<string, boolean> = {};
+  for (const name of names) present[name] = Boolean(process.env[name]);
+  return present;
+}
+
 export async function GET() {
   const [database, blob, ai] = await Promise.all([
     run(async () => {
@@ -28,9 +37,10 @@ export async function GET() {
       await sql`SELECT 1`;
     }),
     run(async () => {
-      const token = process.env.BLOB_READ_WRITE_TOKEN;
-      if (!token) throw new Error("BLOB_READ_WRITE_TOKEN is not set");
-      await list({ token, limit: 1 });
+      if (!process.env.BLOB_READ_WRITE_TOKEN) {
+        throw new Error("BLOB_READ_WRITE_TOKEN is not set");
+      }
+      await list({ limit: 1 });
     }),
     // Lists model metadata instead of generating content: this verifies the
     // key without spending tokens on every health check.
@@ -40,5 +50,15 @@ export async function GET() {
   ]);
 
   const ok = database.ok && blob.ok && ai.ok;
-  return Response.json({ ok, database, blob, ai }, { status: ok ? 200 : 500 });
+
+  return Response.json(
+    {
+      ok,
+      database: { ...database, usingVar: getDbUrl()?.name ?? null },
+      blob,
+      ai: { ...ai, usingVar: getAiKey()?.name ?? null },
+      env: envPresence(),
+    },
+    { status: ok ? 200 : 500 },
+  );
 }
