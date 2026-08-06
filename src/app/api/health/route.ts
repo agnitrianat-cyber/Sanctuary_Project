@@ -1,5 +1,6 @@
 import { list } from "@vercel/blob";
-import { AI_KEY_VARS, getAiClient, getAiKey } from "@/lib/ai";
+import { AI_KEY_VARS, getAiKey } from "@/lib/ai";
+import { OPENAI_KEY_VARS, resolveProvider, verifyAiKey } from "@/lib/feasibility-ai";
 import { BLOB_TOKEN_VARS, getBlobToken, requireBlobToken } from "@/lib/blob";
 import { DB_URL_VARS, getDb, getDbUrl } from "@/lib/db";
 
@@ -35,7 +36,7 @@ async function run(fn: () => Promise<unknown>): Promise<Check> {
 // Reports which of the expected variables exist, never their values, so the
 // deployment can be diagnosed without exposing secrets.
 function envPresence() {
-  const names = [...DB_URL_VARS, ...BLOB_TOKEN_VARS, ...AI_KEY_VARS];
+  const names = [...DB_URL_VARS, ...BLOB_TOKEN_VARS, ...OPENAI_KEY_VARS, ...AI_KEY_VARS];
   const present: Record<string, boolean> = {};
   for (const name of names) present[name] = Boolean(process.env[name]);
   return present;
@@ -50,10 +51,10 @@ export async function GET() {
     run(async () => {
       await list({ token: requireBlobToken(), limit: 1 });
     }),
-    // Lists model metadata instead of generating content: this verifies the
-    // key without spending tokens on every health check.
+    // Checks whichever provider is configured, not Gemini specifically, so a
+    // deployment holding only an OpenAI key is not reported as broken.
     run(async () => {
-      await getAiClient().models.list();
+      await verifyAiKey();
     }),
   ]);
 
@@ -64,7 +65,7 @@ export async function GET() {
       ok,
       database: { ...database, usingVar: getDbUrl()?.name ?? null },
       blob: { ...blob, usingVar: getBlobToken()?.name ?? null },
-      ai: { ...ai, usingVar: getAiKey()?.name ?? null },
+      ai: { ...ai, usingVar: resolveProvider()?.keyVar ?? getAiKey()?.name ?? null, provider: resolveProvider() },
       env: envPresence(),
     },
     { status: ok ? 200 : 500 },
