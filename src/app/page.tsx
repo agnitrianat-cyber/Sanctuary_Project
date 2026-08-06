@@ -1,4 +1,5 @@
 import Dashboard from "@/components/Dashboard";
+import NoticeScreen from "@/components/NoticeScreen";
 import { getDashboardData } from "@/lib/queries";
 
 // Data comes from Neon and should reflect the latest reports/findings,
@@ -7,6 +8,18 @@ export const dynamic = "force-dynamic";
 
 export default async function Page() {
   const { projects, metrics, activities, attention } = await getDashboardData();
+
+  // Every screen depends on a selected project (PRD §4), so without any project
+  // there is nothing to render — show the fix instead of crashing.
+  if (projects.length === 0) {
+    return (
+      <NoticeScreen
+        title="Belum ada data proyek"
+        message="Database sudah terhubung, tapi tabel proyek masih kosong."
+        hint="Jalankan `npm run db:setup` untuk membuat tabel dan mengisi data contoh."
+      />
+    );
+  }
 
   return (
     <Dashboard
