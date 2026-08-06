@@ -14,7 +14,17 @@ export async function POST(request: Request) {
       // Passed explicitly: the SDK only auto-reads BLOB_READ_WRITE_TOKEN.
       token: requireBlobToken(),
       onBeforeGenerateToken: async () => ({
-        allowedContentTypes: ["image/jpeg", "image/png", "image/webp", "application/pdf"],
+        allowedContentTypes: [
+          "image/jpeg",
+          "image/png",
+          "image/webp",
+          "application/pdf",
+          // DWG/DXF have no registered MIME type; browsers send one of these.
+          "application/octet-stream",
+          "application/acad",
+          "image/vnd.dwg",
+        ],
+        maximumSizeInBytes: 100 * 1024 * 1024,
       }),
       onUploadCompleted: async () => {},
     });

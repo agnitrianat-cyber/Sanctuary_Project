@@ -32,6 +32,21 @@ const SCHEMA: string[] = [
      location TEXT NOT NULL,
      sort_order INTEGER NOT NULL DEFAULT 0
    )`,
+  // Only the Blob address and metadata are stored here; the file itself lives
+  // in Vercel Blob (PRD section 7).
+  `CREATE TABLE IF NOT EXISTS drawings (
+     id SERIAL PRIMARY KEY,
+     project_id TEXT NOT NULL,
+     discipline TEXT NOT NULL,
+     level TEXT NOT NULL,
+     filename TEXT NOT NULL,
+     url TEXT NOT NULL,
+     content_type TEXT NOT NULL,
+     status TEXT NOT NULL DEFAULT 'siap',
+     uploaded_at TIMESTAMPTZ NOT NULL DEFAULT now()
+   )`,
+  `CREATE INDEX IF NOT EXISTS drawings_project_level_idx
+     ON drawings (project_id, level)`,
 ];
 
 type SeedSpec = { table: string; sql: string; params: unknown[] };

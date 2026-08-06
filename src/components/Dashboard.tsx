@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, type ComponentType } from "react";
+import { useRouter } from "next/navigation";
 import MobileOverlay, { MOBILE_MAX_WIDTH } from "./MobileOverlay";
 import {
   MENUS,
@@ -9,6 +10,7 @@ import {
   type AttentionItem,
   type MenuKey,
   type Metric,
+  type NavKey,
   type Project,
 } from "@/lib/dashboard-data";
 import {
@@ -35,6 +37,9 @@ const MENU_ICONS: Record<MenuKey, ComponentType<{ size?: number }>> = {
 
 const ACTIVITY_ICONS = { doc: DocIcon, camera: CameraIcon, layers: LayersIcon };
 
+// Only Komposit Gambar is built so far; the rest still show a placeholder.
+const MENU_ROUTES: Partial<Record<MenuKey, string>> = { overlay: "/komposit" };
+
 function todayLabel() {
   return new Intl.DateTimeFormat("id-ID", {
     weekday: "long",
@@ -52,6 +57,7 @@ type DashboardProps = {
 };
 
 export default function Dashboard({ projects, metrics, activities, attention }: DashboardProps) {
+  const router = useRouter();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [projectPickerOpen, setProjectPickerOpen] = useState(false);
   const [activeProjectId, setActiveProjectId] = useState(projects[0].id);
@@ -75,13 +81,17 @@ export default function Dashboard({ projects, metrics, activities, attention }: 
     showToast("Proyek diubah ke " + p.name);
   }
 
-  function navigate(label: string) {
+  function navigate(key: NavKey, label: string) {
     setSidebarOpen(false);
-    if (label !== "Dashboard") showToast("Membuka " + label + "…");
+    const route = key === "dashboard" ? null : MENU_ROUTES[key as MenuKey];
+    if (route) router.push(route);
+    else if (key !== "dashboard") showToast(label + " belum dibangun.");
   }
 
-  function openMenu(title: string) {
-    showToast("Membuka " + title + "…");
+  function openMenu(key: MenuKey, title: string) {
+    const route = MENU_ROUTES[key];
+    if (route) router.push(route);
+    else showToast(title + " belum dibangun.");
   }
 
   return (
@@ -190,7 +200,7 @@ export default function Dashboard({ projects, metrics, activities, attention }: 
                   <div style={{ font: "700 15px var(--font-heading)", color: "var(--color-text)" }}>{menu.title}</div>
                   <div style={{ font: "12.5px/1.4 var(--font-body)", color: "var(--color-neutral-700)", marginTop: 4 }}>{menu.desc}</div>
                 </div>
-                <button className="btn btn-primary btn-block" style={{ marginTop: 2 }} onClick={() => openMenu(menu.title)}>
+                <button className="btn btn-primary btn-block" style={{ marginTop: 2 }} onClick={() => openMenu(menu.key, menu.title)}>
                   Buka
                 </button>
               </div>
@@ -259,7 +269,7 @@ export default function Dashboard({ projects, metrics, activities, attention }: 
               return (
                 <button
                   key={n.key}
-                  onClick={() => navigate(n.label)}
+                  onClick={() => navigate(n.key, n.label)}
                   style={{
                     display: "flex",
                     alignItems: "center",
