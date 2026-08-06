@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+
+<helmet>
+  <link rel="stylesheet" href="_ds/modernist-d8f1eb7d-7a24-4eba-9dba-0b40d25dffae/styles.css">
+  <script src="_ds/modernist-d8f1eb7d-7a24-4eba-9dba-0b40d25dffae/_ds_bundle.js"></script>
+  <style>
+    body{margin:0;background:#e7e5e2}
+    .pw-scroll::-webkit-scrollbar{display:none}
+    .pw-fadein{animation:pwFade .18s ease}
+    @keyframes pwFade{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
+  </style>
+</helmet>
+
+<x-import component-from-global-scope="IOSDevice" from="./ios-frame.jsx" width="402" height="874" hint-size="402px,874px" style="margin:24px auto">
+
+  <div class="pw-scroll" style="height:100%;overflow-y:auto;padding-top:59px;box-sizing:border-box;background:var(--color-bg);font-family:var(--font-body)">
+
+    <!-- Topbar -->
+    <div style="position:sticky;top:0;z-index:5;display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 16px;background:var(--color-bg);border-bottom:2px solid var(--color-divider)">
+      <button onClick="{{ toggleSidebar }}" aria-label="Menu" style="width:36px;height:36px;border:none;background:transparent;display:flex;align-items:center;justify-content:center;padding:0;cursor:pointer">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--color-text)" stroke-width="2" stroke-linecap="round"><line x1="4" y1="7" x2="20" y2="7"></line><line x1="4" y1="12" x2="20" y2="12"></line><line x1="4" y1="17" x2="20" y2="17"></line></svg>
+      </button>
+
+      <button onClick="{{ toggleProjectPicker }}" style="flex:1;display:flex;align-items:center;justify-content:center;gap:6px;height:36px;border:2px solid var(--color-divider);background:var(--color-neutral-100);padding:0 12px;cursor:pointer;max-width:230px">
+        <span style="font:600 13px/1.2 var(--font-heading);color:var(--color-text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ activeProject.name }}</span>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--color-text)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><polyline points="6 9 12 15 18 9"></polyline></svg>
+      </button>
+
+      <div style="width:36px;height:36px;border:2px solid var(--color-text);display:flex;align-items:center;justify-content:center;font:700 12px var(--font-heading);color:var(--color-text);flex-shrink:0">BS</div>
+    </div>
+
+    <!-- Project picker sheet -->
+    <sc-if value="{{ projectPickerOpen }}">
+      <div style="position:absolute;top:59px;left:0;right:0;bottom:0;z-index:6;background:rgba(32,30,29,0.4)" onClick="{{ toggleProjectPicker }}">
+        <div class="pw-fadein" style="background:var(--color-bg);border-bottom:2px solid var(--color-text);padding:14px 16px 18px" onClick="{{ stop }}">
+          <div style="font:700 11px var(--font-heading);letter-spacing:.04em;text-transform:uppercase;color:var(--color-neutral-700);margin-bottom:10px">Pilih Proyek</div>
+          <sc-for list="{{ projects }}" as="p" hint-placeholder-count="3">
+            <button onClick="{{ p.select }}" style="width:100%;display:flex;align-items:center;justify-content:space-between;gap:8px;padding:12px 4px;background:transparent;border:none;border-bottom:1px solid var(--color-divider);cursor:pointer;text-align:left">
+              <div>
+                <div style="font:600 14px var(--font-heading);color:var(--color-text)">{{ p.name }}</div>
+                <div style="font:12px var(--font-body);color:var(--color-neutral-700);margin-top:2px">{{ p.location }}</div>
+              </div>
+              <sc-if value="{{ p.active }}"><div style="width:9px;height:9px;background:var(--color-accent)"></div></sc-if>
+            </button>
+          </sc-for>
+        </div>
+      </div>
+    </sc-if>
+
+    <!-- Greeting -->
+    <div style="padding:18px 16px 14px">
+      <div style="font:700 22px/1.2 var(--font-heading);color:var(--color-text)">Halo, Pak Budi</div>
+      <div style="font:13px var(--font-body);color:var(--color-neutral-700);margin-top:3px">{{ todayLabel }} · {{ activeProject.name }}</div>
+    </div>
+
+    <!-- Metrics row -->
+    <div class="pw-scroll" style="display:flex;gap:10px;overflow-x:auto;padding:0 16px 6px;scrollbar-width:none">
+      <sc-for list="{{ metrics }}" as="m" hint-placeholder-count="4">
+        <div class="card" style="flex:0 0 148px;padding:14px;box-sizing:border-box">
+          <div style="font:11px var(--font-body);color:var(--color-neutral-700);line-height:1.3;min-height:28px">{{ m.label }}</div>
+          <div style="font:700 26px var(--font-heading);color:var(--color-text);margin-top:6px;letter-spacing:-.01em">{{ m.value }}</div>
+          <div style="display:flex;align-items:center;gap:4px;margin-top:5px">
+            <span style="font:600 11px var(--font-body);color:{{ m.deltaColor }}">{{ m.delta }}</span>
+          </div>
+        </div>
+      </sc-for>
+    </div>
+
+    <!-- Menu cards -->
+    <div style="padding:22px 16px 6px">
+      <div style="font:700 11px var(--font-heading);letter-spacing:.04em;text-transform:uppercase;color:var(--color-neutral-700);margin-bottom:10px">Menu</div>
+      <div style="display:grid;grid-template-columns:{{ menuGridCols }};gap:12px">
+        <sc-for list="{{ menus }}" as="menu" hint-placeholder-count="4">
+          <div class="card" style="padding:16px;box-sizing:border-box;display:flex;flex-direction:column;gap:10px">
+            <div style="width:38px;height:38px;border:2px solid var(--color-text);display:flex;align-items:center;justify-content:center;flex-shrink:0" dangerouslySetInnerHTML="{{ menu.iconHtml }}"></div>
+            <div>
+              <div style="font:700 15px var(--font-heading);color:var(--color-text)">{{ menu.title }}</div>
+              <div style="font:12.5px/1.4 var(--font-body);color:var(--color-neutral-700);margin-top:4px">{{ menu.desc }}</div>
+            </div>
+            <button class="btn btn-primary btn-block" onClick="{{ menu.open }}" style="margin-top:2px">Buka</button>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+
+    <!-- Aktivitas terakhir -->
+    <div style="padding:22px 16px 6px">
+      <div style="font:700 11px var(--font-heading);letter-spacing:.04em;text-transform:uppercase;color:var(--color-neutral-700);margin-bottom:10px">Aktivitas Terakhir</div>
+      <div class="card" style="padding:4px 14px">
+        <sc-for list="{{ activities }}" as="a" hint-placeholder-count="3">
+          <div style="display:flex;gap:10px;padding:12px 0;border-bottom:1px solid var(--color-divider)">
+            <div style="width:30px;height:30px;border:2px solid var(--color-divider);display:flex;align-items:center;justify-content:center;flex-shrink:0" dangerouslySetInnerHTML="{{ a.iconHtml }}"></div>
+            <div style="min-width:0">
+              <div style="font:600 13px var(--font-heading);color:var(--color-text)">{{ a.title }}</div>
+              <div style="font:12px var(--font-body);color:var(--color-neutral-700);margin-top:2px">{{ a.meta }}</div>
+            </div>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+
+    <!-- Perlu perhatian -->
+    <div style="padding:22px 16px 28px">
+      <div style="font:700 11px var(--font-heading);letter-spacing:.04em;text-transform:uppercase;color:var(--color-neutral-700);margin-bottom:10px">Perlu Perhatian</div>
+      <div class="card" style="padding:4px 14px;border-color:var(--color-accent-300)">
+        <sc-for list="{{ attention }}" as="t" hint-placeholder-count="2">
+          <div style="padding:12px 0;border-bottom:1px solid var(--color-divider)">
+            <div style="display:flex;align-items:center;gap:8px">
+              <span class="tag tag-accent">{{ t.tagLabel }}</span>
+              <span style="font:12px var(--font-body);color:var(--color-accent-700)">{{ t.overdue }}</span>
+            </div>
+            <div style="font:600 13.5px var(--font-heading);color:var(--color-text);margin-top:6px">{{ t.title }}</div>
+            <div style="font:12px var(--font-body);color:var(--color-neutral-700);margin-top:2px">{{ t.location }}</div>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Sidebar drawer -->
+  <sc-if value="{{ sidebarOpen }}">
+    <div style="position:absolute;inset:0;z-index:10;background:rgba(32,30,29,0.45)" onClick="{{ toggleSidebar }}">
+      <div class="pw-fadein" style="width:270px;height:100%;background:var(--color-bg);border-right:2px solid var(--color-text);box-sizing:border-box;padding:64px 0 20px;display:flex;flex-direction:column" onClick="{{ stop }}">
+        <div style="padding:0 20px 20px;border-bottom:2px solid var(--color-divider);margin-bottom:6px">
+          <div style="font:700 16px var(--font-heading);color:var(--color-text)">Divisi Proyek</div>
+          <div style="font:12px var(--font-body);color:var(--color-neutral-700);margin-top:2px">Workspace internal</div>
+        </div>
+        <sc-for list="{{ navItems }}" as="n" hint-placeholder-count="5">
+          <button onClick="{{ n.select }}" style="display:flex;align-items:center;gap:12px;padding:13px 20px;background:{{ n.bg }};border:none;border-left:{{ n.borderLeft }};cursor:pointer;text-align:left;width:100%;box-sizing:border-box">
+            <div style="width:20px;height:20px;flex-shrink:0" dangerouslySetInnerHTML="{{ n.iconHtml }}"></div>
+            <span style="font:600 14px var(--font-heading);color:{{ n.color }}">{{ n.label }}</span>
+          </button>
+        </sc-for>
+      </div>
+    </div>
+  </sc-if>
+
+  <!-- Toast -->
+  <sc-if value="{{ toast }}">
+    <div class="pw-fadein" style="position:absolute;left:16px;right:16px;bottom:26px;z-index:20;background:var(--color-text);color:var(--color-bg);padding:12px 16px;font:600 13px var(--font-body);box-shadow:var(--shadow-md)">{{ toast }}</div>
+  </sc-if>
+
+</x-import>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:450,&quot;height&quot;:900},&quot;menuLayout&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;default&quot;:&quot;stack&quot;,&quot;options&quot;:[&quot;stack&quot;,&quot;grid&quot;],&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Layout&quot;},&quot;denseSpacing&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Layout&quot;},&quot;sidebarDefaultOpen&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Behavior&quot;}}">
+const ICONS = {
+  feasibility: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="2" width="16" height="20" rx="0"></rect><line x1="8" y1="7" x2="16" y2="7"></line><line x1="8" y1="11" x2="10" y2="11"></line><line x1="13" y1="11" x2="16" y2="11"></line><line x1="8" y1="15" x2="10" y2="15"></line><line x1="13" y1="15" x2="16" y2="15"></line><line x1="8" y1="19" x2="10" y2="19"></line><line x1="13" y1="19" x2="16" y2="19"></line></svg>',
+  supervision: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 20v-1a7 7 0 0 1 7-7h1"></path><circle cx="9" cy="7" r="4"></circle><path d="M14 20l3-8 3 8"></path><path d="M15.5 16h3"></path></svg>',
+  estimate: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 8l-5-5H5a1 1 0 0 0-1 1v16a1 1 0 0 0 1 1h15a1 1 0 0 0 1-1V8z"></path><path d="M16 3v5h5"></path><line x1="8" y1="13" x2="8" y2="18"></line><line x1="5.5" y1="15.5" x2="10.5" y2="15.5"></line></svg>',
+  overlay: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 21 7 12 12 3 7"></polygon><polyline points="3 12 12 17 21 12"></polyline><polyline points="3 17 12 22 21 17"></polyline></svg>',
+  home: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10l9-7 9 7"></path><path d="M5 9v11h14V9"></path></svg>',
+  camera: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h3l1.5-2h7L17 8h3a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z"></path><circle cx="12" cy="14" r="3.5"></circle></svg>',
+  doc: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2h9l5 5v15H6z"></path><path d="M15 2v5h5"></path></svg>',
+  layers: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 3 21 8 12 13 3 8"></polygon><polyline points="3 13 12 18 21 13"></polyline></svg>',
+};
+
+class Component extends DCLogic {
+  state = {
+    sidebarOpen: this.props.sidebarDefaultOpen ?? false,
+    projectPickerOpen: false,
+    activeProjectId: 'p1',
+    toast: null,
+  };
+
+  toggleSidebar = () => this.setState(s => ({ sidebarOpen: !s.sidebarOpen }));
+  toggleProjectPicker = () => this.setState(s => ({ projectPickerOpen: !s.projectPickerOpen }));
+  stop = (e) => e && e.stopPropagation && e.stopPropagation();
+
+  showToast(msg) {
+    this.setState({ toast: msg });
+    clearTimeout(this._t);
+    this._t = setTimeout(() => this.setState({ toast: null }), 2200);
+  }
+
+  selectProject = (id) => {
+    this.setState({ activeProjectId: id, projectPickerOpen: false });
+    const p = this.getProjects().find(p => p.id === id);
+    this.showToast('Proyek diubah ke ' + p.name);
+  };
+
+  navigate = (label) => {
+    this.setState({ sidebarOpen: false });
+    if (label !== 'Dashboard') this.showToast('Membuka ' + label + '\u2026');
+  };
+
+  getProjects() {
+    return [
+      { id: 'p1', name: 'Green Valley – Cluster Anggrek', location: 'Bogor, Jawa Barat' },
+      { id: 'p2', name: 'Kavling Mutiara Timur', location: 'Sidoarjo, Jawa Timur' },
+      { id: 'p3', name: 'Perumahan Cempaka Asri', location: 'Karawang, Jawa Barat' },
+    ];
+  }
+
+  renderVals() {
+    const projects = this.getProjects();
+    const activeProject = projects.find(p => p.id === this.state.activeProjectId);
+
+    const menuLayout = this.props.menuLayout ?? 'stack';
+    const dense = this.props.denseSpacing ?? false;
+
+    return {
+      todayLabel: 'Kamis, 6 Agustus 2026',
+      activeProject,
+      sidebarOpen: this.state.sidebarOpen,
+      toggleSidebar: this.toggleSidebar,
+      projectPickerOpen: this.state.projectPickerOpen,
+      toggleProjectPicker: this.toggleProjectPicker,
+      stop: this.stop,
+      toast: this.state.toast,
+      menuGridCols: menuLayout === 'grid' ? '1fr 1fr' : '1fr',
+
+      projects: projects.map(p => ({
+        ...p,
+        active: p.id === this.state.activeProjectId,
+        select: () => this.selectProject(p.id),
+      })),
+
+      metrics: [
+        { label: 'Progres realisasi vs rencana', value: '62% / 68%', delta: '\u25bc 6% di bawah rencana', deltaColor: 'var(--color-accent-700)' },
+        { label: 'Deviasi jadwal', value: '-12 hari', delta: '\u25bc Terlambat', deltaColor: 'var(--color-accent-700)' },
+        { label: 'Nilai kontrak vs realisasi', value: 'Rp 11,2 M', delta: 'dari Rp 18,4 M kontrak', deltaColor: 'var(--color-neutral-700)' },
+        { label: 'Temuan terbuka', value: '7', delta: '\u25b2 2 prioritas tinggi', deltaColor: 'var(--color-accent-700)' },
+      ],
+
+      menus: [
+        { title: 'Studi Kelayakan', desc: 'Hitung kelayakan rencana proyek sebelum diputuskan.', iconHtml: { __html: ICONS.feasibility }, open: () => this.showToast('Membuka Studi Kelayakan\u2026') },
+        { title: 'Supervisi Lapangan', desc: 'Pantau laporan harian, progres, dan temuan di lokasi.', iconHtml: { __html: ICONS.supervision }, open: () => this.showToast('Membuka Supervisi Lapangan\u2026') },
+        { title: 'Estimasi Biaya', desc: 'Hitung volume & biaya langsung dari gambar konstruksi.', iconHtml: { __html: ICONS.estimate }, open: () => this.showToast('Membuka Estimasi Biaya\u2026') },
+        { title: 'Komposit Gambar', desc: 'Tumpuk gambar STR/ARS/MEP/INT untuk cek bentrok.', iconHtml: { __html: ICONS.overlay }, open: () => this.showToast('Membuka Komposit Gambar\u2026') },
+      ],
+
+      activities: [
+        { title: 'Laporan harian – Blok C', meta: 'Oleh Pengawas Rudi · 2 jam lalu', iconHtml: { __html: ICONS.doc } },
+        { title: 'Estimasi Rangka Atap Blok B', meta: 'Rp 842.500.000 · dibuat kemarin', iconHtml: { __html: ICONS.camera } },
+        { title: 'Temuan koordinasi baru', meta: 'Bentrok ducting vs balok, Lt.2 Zona A', iconHtml: { __html: ICONS.layers } },
+      ],
+
+      attention: [
+        { tagLabel: 'Prioritas Tinggi', overdue: 'Lewat tenggat 3 hari', title: 'Retak dinding struktur', location: 'Blok A, Unit 12' },
+        { tagLabel: 'Prioritas Tinggi', overdue: 'Lewat tenggat 1 hari', title: 'Kebocoran pipa MEP', location: 'Blok C, Lantai 1' },
+      ],
+
+      navItems: ['Dashboard', 'Studi Kelayakan', 'Supervisi Lapangan', 'Estimasi Biaya', 'Komposit Gambar'].map(label => {
+        const active = label === 'Dashboard';
+        return {
+          label,
+          bg: active ? 'var(--color-accent-100)' : 'transparent',
+          borderLeft: active ? '3px solid var(--color-accent)' : '3px solid transparent',
+          color: active ? 'var(--color-accent-700)' : 'var(--color-text)',
+          iconHtml: { __html: ({ Dashboard: ICONS.home, 'Studi Kelayakan': ICONS.feasibility, 'Supervisi Lapangan': ICONS.supervision, 'Estimasi Biaya': ICONS.estimate, 'Komposit Gambar': ICONS.overlay })[label] },
+          select: () => this.navigate(label),
+        };
+      }),
+    };
+  }
+}
+</script>
+</body>
+</html>
