@@ -40,6 +40,7 @@ const ACTIVITY_ICONS = { doc: DocIcon, camera: CameraIcon, layers: LayersIcon };
 // Menus without a route here are not built yet and say so when tapped.
 const MENU_ROUTES: Partial<Record<MenuKey, string>> = {
   feasibility: "/kelayakan",
+  supervision: "/supervisi",
   overlay: "/komposit",
 };
 
