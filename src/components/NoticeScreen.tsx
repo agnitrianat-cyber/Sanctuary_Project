@@ -5,12 +5,14 @@ type NoticeScreenProps = {
   title: string;
   message: string;
   hint?: string;
+  /** Shows a button that opens /api/setup, for when tables are missing. */
+  showSetup?: boolean;
   children?: ReactNode;
 };
 
 // Shared full-screen state for "kosong" and "gagal" cases, so the user never
 // lands on a blank screen without an explanation (PRD §6).
-export default function NoticeScreen({ title, message, hint, children }: NoticeScreenProps) {
+export default function NoticeScreen({ title, message, hint, showSetup, children }: NoticeScreenProps) {
   return (
     <div
       style={{
@@ -43,6 +45,15 @@ export default function NoticeScreen({ title, message, hint, children }: NoticeS
           >
             {hint}
           </div>
+        )}
+        {showSetup && (
+          <a
+            className="btn btn-primary"
+            href="/api/setup"
+            style={{ marginTop: 16, display: "inline-flex", textDecoration: "none" }}
+          >
+            Buat tabel sekarang
+          </a>
         )}
         {children}
       </div>
