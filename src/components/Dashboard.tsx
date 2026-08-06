@@ -3,13 +3,13 @@
 import { useEffect, useRef, useState, type ComponentType } from "react";
 import MobileOverlay, { MOBILE_MAX_WIDTH } from "./MobileOverlay";
 import {
-  ACTIVITIES,
-  ATTENTION,
   MENUS,
-  METRICS,
   NAV_ITEMS,
-  PROJECTS,
+  type Activity,
+  type AttentionItem,
   type MenuKey,
+  type Metric,
+  type Project,
 } from "@/lib/dashboard-data";
 import {
   CameraIcon,
@@ -44,16 +44,23 @@ function todayLabel() {
   }).format(new Date());
 }
 
-export default function Dashboard() {
+type DashboardProps = {
+  projects: Project[];
+  metrics: Metric[];
+  activities: Activity[];
+  attention: AttentionItem[];
+};
+
+export default function Dashboard({ projects, metrics, activities, attention }: DashboardProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [projectPickerOpen, setProjectPickerOpen] = useState(false);
-  const [activeProjectId, setActiveProjectId] = useState(PROJECTS[0].id);
+  const [activeProjectId, setActiveProjectId] = useState(projects[0].id);
   const [toast, setToast] = useState<string | null>(null);
   const toastTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
   useEffect(() => () => clearTimeout(toastTimer.current), []);
 
-  const activeProject = PROJECTS.find((p) => p.id === activeProjectId)!;
+  const activeProject = projects.find((p) => p.id === activeProjectId)!;
 
   function showToast(msg: string) {
     setToast(msg);
@@ -62,7 +69,7 @@ export default function Dashboard() {
   }
 
   function selectProject(id: string) {
-    const p = PROJECTS.find((p) => p.id === id)!;
+    const p = projects.find((p) => p.id === id)!;
     setActiveProjectId(id);
     setProjectPickerOpen(false);
     showToast("Proyek diubah ke " + p.name);
@@ -128,7 +135,7 @@ export default function Dashboard() {
             <div style={{ font: "700 11px var(--font-heading)", letterSpacing: ".04em", textTransform: "uppercase", color: "var(--color-neutral-700)", marginBottom: 10 }}>
               Pilih Proyek
             </div>
-            {PROJECTS.map((p) => (
+            {projects.map((p) => (
               <button
                 key={p.id}
                 onClick={() => selectProject(p.id)}
@@ -155,7 +162,7 @@ export default function Dashboard() {
 
       {/* Metrics row */}
       <div className="no-scrollbar" style={{ display: "flex", gap: 10, overflowX: "auto", padding: "0 16px 6px" }}>
-        {METRICS.map((m) => (
+        {metrics.map((m) => (
           <div key={m.label} className="card" style={{ flex: "0 0 148px", padding: 14, boxSizing: "border-box" }}>
             <div style={{ font: "11px var(--font-body)", color: "var(--color-neutral-700)", lineHeight: 1.3, minHeight: 28 }}>{m.label}</div>
             <div style={{ font: "700 26px var(--font-heading)", color: "var(--color-text)", marginTop: 6, letterSpacing: "-.01em" }}>{m.value}</div>
@@ -198,7 +205,7 @@ export default function Dashboard() {
           Aktivitas Terakhir
         </div>
         <div className="card" style={{ padding: "4px 14px" }}>
-          {ACTIVITIES.map((a, i) => {
+          {activities.map((a, i) => {
             const Icon = ACTIVITY_ICONS[a.icon];
             return (
               <div key={i} style={{ display: "flex", gap: 10, padding: "12px 0", borderBottom: "1px solid var(--color-divider)" }}>
@@ -221,7 +228,7 @@ export default function Dashboard() {
           Perlu Perhatian
         </div>
         <div className="card" style={{ padding: "4px 14px", borderColor: "var(--color-accent-300)" }}>
-          {ATTENTION.map((t, i) => (
+          {attention.map((t, i) => (
             <div key={i} style={{ padding: "12px 0", borderBottom: "1px solid var(--color-divider)" }}>
               <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                 <span className="tag tag-accent">{t.tagLabel}</span>
